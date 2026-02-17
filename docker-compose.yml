@@ -1,0 +1,16 @@
+services:
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-server-local
+    platform: linux/amd64  # Required for Apple Silicon (M1/M2/M3) compatibility
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd  # Must include Uppercase, Lowercase, Number, Special Char
+    ports:
+      - "1433:1433"  # Maps localhost:1433 to container:1433
+    volumes:
+      - sql_data:/var/opt/mssql # Persist data so you don't lose it on restart
+
+volumes:
+  sql_data:
