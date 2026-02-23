@@ -141,3 +141,4 @@
 /Users/bashisthapandey/Desktop/project management/backend/obj/Debug/net9.0/backend.pdb
 /Users/bashisthapandey/Desktop/project management/backend/obj/Debug/net9.0/backend.genruntimeconfig.cache
 /Users/bashisthapandey/Desktop/project management/backend/obj/Debug/net9.0/ref/backend.dll
+/Users/bashisthapandey/Desktop/project management/backend/bin/Debug/net9.0/package-lock.json

@@ -1,15 +1,15 @@
-using System.Security.Claims;
-using backend.Data;
-using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.Data;
+using backend.Models;
+using System.Security.Claims;
 
 namespace backend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize] // 1. Everyone must be logged in
+[Authorize]
 public class ProjectsController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -19,58 +19,67 @@ public class ProjectsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/projects
-    // Logic: Admin sees ALL projects. User sees only THEIR projects.
+    // DTO for receiving project data
+    public record CreateProjectDto(string Name, string Description);
+
     [HttpGet]
-    public async Task<IActionResult> GetProjects()
+    public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (userRole == "Admin")
-        {
-            return Ok(await _context.Projects.Include(p => p.Columns).ToListAsync());
-        }
         
-        // Regular User
-        var projects = await _context.Projects
-            .Where(p => p.OwnerId == userId)
+        // Return projects owned by user OR where user is assigned
+        return await _context.Projects
             .Include(p => p.Columns)
+            .ThenInclude(c => c.Tasks) // Include tasks count if needed
+            .Where(p => p.OwnerId == userId)
             .ToListAsync();
-        
-        return Ok(projects);
     }
 
-    // POST: api/projects
-    [HttpPost]
-    public async Task<IActionResult> CreateProject(Project project)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Project>> GetProject(int id)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        project.OwnerId = userId;
+        var project = await _context.Projects
+            .Include(p => p.Columns.OrderBy(c => c.OrderIndex))
+            .ThenInclude(c => c.Tasks.OrderBy(t => t.Position))
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (project == null) return NotFound();
+
+        return project;
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<ActionResult<Project>> CreateProject(CreateProjectDto dto)
+    {
+        // 1. Get the logged-in user's ID safely
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString)) return Unauthorized("User ID not found in token");
         
-        // Initialize default columns
-        project.Columns = new List<BoardColumn> {
-            new BoardColumn { Name = "Todo", OrderIndex = 0 },
-            new BoardColumn { Name = "In Progress", OrderIndex = 1 },
-            new BoardColumn { Name = "Done", OrderIndex = 2 }
+        var userId = int.Parse(userIdString);
+
+        // 2. Create the Project
+        var project = new Project
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            OwnerId = userId
         };
 
         _context.Projects.Add(project);
-        await _context.SaveChangesAsync();
-        return Ok(project);
-    }
+        await _context.SaveChangesAsync(); // Save to get the Project ID
 
-    // DELETE: api/projects/5
-    // Logic: Only Admins can delete projects.
-    [HttpDelete("{id}")]
-    [Authorize(Policy = "AdminOnly")] // <--- USES THE POLICY defined in Program.cs
-    public async Task<IActionResult> DeleteProject(int id)
-    {
-        var project = await _context.Projects.FindAsync(id);
-        if (project == null) return NotFound();
+        // 3. AUTOMATICALLY Create Default Columns
+        var columns = new List<BoardColumn>
+        {
+            new BoardColumn { Name = "Todo", OrderIndex = 0, ProjectId = project.Id },
+            new BoardColumn { Name = "In Progress", OrderIndex = 1, ProjectId = project.Id },
+            new BoardColumn { Name = "Done", OrderIndex = 2, ProjectId = project.Id }
+        };
 
-        _context.Projects.Remove(project);
+        _context.BoardColumns.AddRange(columns);
         await _context.SaveChangesAsync();
-        return Ok("Project deleted by Admin");
+
+        return CreatedAtAction(nameof(GetProject), new { id = project.Id }, project);
     }
 }

@@ -43,7 +43,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("BoardColumns");
+                    b.ToTable("BoardColumns", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Project", b =>
@@ -67,7 +67,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.TaskItem", b =>
@@ -100,7 +100,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ColumnId");
 
-                    b.ToTable("Tasks");
+                    b.ToTable("Tasks", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -125,7 +125,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.BoardColumn", b =>

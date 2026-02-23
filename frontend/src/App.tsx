@@ -1,35 +1,24 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Board from './components/kanban/Board';
-import Login from './pages/Login'; // (See Login Code below)
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import UserManagement from './pages/UserManagement';
+import type { JSX } from 'react/jsx-dev-runtime';
 
-// Protect Routes logic
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
-    const { user } = useAuth();
-    return user ? children : <Navigate to="/login" />;
+const PrivateRoute = ({ children }: { children: JSX.Element }) => { 
+    const { user } = useAuth(); 
+    return user ? children : <Navigate to="/login" />; 
 };
-
-function AppRoutes() {
-    return (
-        <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route 
-                path="/" 
-                element={
-                    <PrivateRoute>
-                        <Board />
-                    </PrivateRoute>
-                } 
-            />
-        </Routes>
-    );
-}
 
 export default function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
-                <AppRoutes />
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                    <Route path="/users" element={<PrivateRoute><UserManagement /></PrivateRoute>} />
+                </Routes>
             </BrowserRouter>
         </AuthProvider>
     );

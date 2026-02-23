@@ -1,14 +1,8 @@
 export interface User {
     id: number;
     username: string;
-    token?: string;
-}
-
-export interface User {
-    id: number;
-    username: string;
-    role: 'Admin' | 'User'; // Added Role
-    token?: string;
+    role: 'Admin' | 'User';
+    token: string;
 }
 
 export interface Task {
@@ -17,7 +11,10 @@ export interface Task {
     description: string;
     priority: 'Low' | 'Medium' | 'High';
     position: number;
+    startDate?: string;
+    dueDate?: string;
     columnId: number;
+    assignedUserId?: number;
 }
 
 export interface Column {

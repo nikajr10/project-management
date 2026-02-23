@@ -1,14 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState,  useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { User } from '../types';
+import type { User } from '../types'; // FIXED: Added 'type'
 import { jwtDecode } from 'jwt-decode';
-
-interface JwtPayload {
-    sub?: string;
-    unique_name?: string;
-    role?: string;
-    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"?: string;
-}
 
 interface AuthContextType {
     user: User | null;
@@ -24,29 +17,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (token) {
-            decodeAndSetUser(token);
-        }
+        if (token) decodeAndSetUser(token);
     }, []);
 
     const decodeAndSetUser = (token: string) => {
         try {
-            const decoded = jwtDecode<JwtPayload>(token);
-
-            const role =
-                decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
-                decoded.role ||
-                "User";
-
+            const decoded: any = jwtDecode(token);
+            const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded.role || "User";
             setUser({
-                id: decoded.sub ? parseInt(decoded.sub) : 0,
-                username: decoded.unique_name ?? "User",
+                id: parseInt(decoded.sub || "0"),
+                username: decoded.unique_name || decoded.sub || "User",
                 role: role,
-                token: token
+                token
             });
-
             localStorage.setItem('token', token);
-        } catch {
+        } catch (e) {
             logout();
         }
     };
@@ -60,10 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
-    const isAdmin = user?.role === 'Admin';
-
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAdmin }}>
+        <AuthContext.Provider value={{ user, login, logout, isAdmin: user?.role === 'Admin' }}>
             {children}
         </AuthContext.Provider>
     );
@@ -71,8 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within an AuthProvider');
     return context;
 };
