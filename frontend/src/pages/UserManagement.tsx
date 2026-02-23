@@ -94,7 +94,7 @@ export default function UserManagement() {
                             />
                         </div>
 
-                       
+                        {/* 👉 THIS IS THE SECTION THAT WAS MISSING 👈 */}
                         <div>
                             <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Assign Projects</label>
                             <div className="max-h-40 overflow-y-auto border border-slate-300 rounded-md p-2 bg-slate-50 custom-scrollbar shadow-inner">
